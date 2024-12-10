@@ -1,18 +1,18 @@
 # Chinese to English Slug Converter / zh-to-en-slug
 Chinese to English Slug Converter is a WordPress plugin that automatically converts Chinese post titles into English slugs. It uses the Google Cloud Translation API to provide accurate translations and creates clean, SEO-friendly URLs for your content.
 === Chinese to English Slug Converter ===
-Contributors: Ivan Lin
-Tags: chinese, english, slug, translation, permalink
-Requires at least: 6.0
-Tested up to: 6.7.1
-Requires PHP: 7.4
-Stable tag: 1.0.0
-Plugin URI: https://yblog.org/zh-to-en-slug
-Version: 1.0.0
-Author: Ivan Lin
-Author URI: https://yblog.org/
-License: Apache-2.0
-License URI: https://opensource.org/license/apache-2-0
+* Contributors: Ivan Lin
+* Tags: chinese, english, slug, translation, permalink
+* Requires at least: 6.0
+* Tested up to: 6.7.1
+* Requires PHP: 7.4
+* Stable tag: 1.0.0
+* Plugin URI: https://github.com/ivanusto/zh-to-en-slug
+* Version: 1.0.0
+* Author: Ivan Lin
+* Author URI: https://yblog.org/
+* License: Apache-2.0
+* License URI: https://opensource.org/license/apache-2-0
 
 Automatically converts Chinese post titles to English slugs using Google Translate API.
 
