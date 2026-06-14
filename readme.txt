@@ -4,11 +4,7 @@ Tags: chinese, english, slug, translation, permalink
 Requires at least: 6.0
 Tested up to: 6.7.1
 Requires PHP: 7.4
-Stable tag: 1.0.0
-Plugin URI: https://yblog.org/zh-to-en-slug
-Version: 1.0.0
-Author: Ivan Lin
-Author URI: https://yblog.org/
+Stable tag: 1.1.0
 License: Apache-2.0
 License URI: https://opensource.org/license/apache-2-0
 
@@ -21,6 +17,7 @@ Chinese to English Slug Converter is a WordPress plugin that automatically conve
 = Key Features =
 
 * Automatic translation of Chinese titles to English slugs
+* Post ID appended to slug for guaranteed uniqueness
 * Configurable maximum slug length
 * Clean and SEO-friendly URL structure
 * Easy-to-use settings interface
@@ -89,6 +86,13 @@ Yes, the plugin works with all post types that use slugs in WordPress.
 3. Example of translated slug
 
 == Changelog ==
+
+= 1.1.0 =
+* Append post ID to generated slug to guarantee uniqueness across posts
+* Refactor internal API call logic to eliminate code duplication
+* Fix admin script version to match plugin version
+* Improve JavaScript i18n: pass status strings through wp_localize_script
+* Security: use .text() instead of .html() when displaying API test results
 
 = 1.0.0 =
 * Initial release
