@@ -2,23 +2,23 @@ jQuery(document).ready(function($) {
     $('#test-api-button').on('click', function(e) {
         e.preventDefault();
         var apiKey = $('#api_key').val();
-        
+
         $.ajax({
-            url: ajaxurl,
+            url: ctsAdmin.ajaxurl,
             type: 'POST',
             data: {
                 action: 'test_translation_api',
                 api_key: apiKey,
-                nonce: $('#cts_nonce').val()
+                nonce: ctsAdmin.nonce
             },
             beforeSend: function() {
-                $('#api-test-result').html('測試中...');
+                $('#api-test-result').text(ctsAdmin.testing);
             },
             success: function(response) {
-                $('#api-test-result').html(response.data);
+                $('#api-test-result').text(response.data);
             },
             error: function() {
-                $('#api-test-result').html('測試失敗，請檢查網路連線');
+                $('#api-test-result').text(ctsAdmin.error);
             }
         });
     });

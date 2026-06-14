@@ -3,7 +3,7 @@
 Plugin Name: Chinese to English Slug Converter
 Description: Convert Chinese post titles to English slugs using translation API
 Plugin URI: https://yblog.org/zh-to-en-slug
-Version: 1.0.0
+Version: 1.1.0
 Author: Ivan Lin
 Author URI: https://yblog.org/
 Requires at least: 6.0
@@ -17,6 +17,23 @@ License URI: https://opensource.org/license/apache-2-0
 // 防止直接訪問此文件
 if (!defined('ABSPATH')) {
     exit;
+}
+
+// Define the sanitize function at the global scope
+if (!function_exists('sanitize_cts_options')) {
+    function sanitize_cts_options($input) {
+        $sanitized = array();
+        
+        if (isset($input['api_key'])) {
+            $sanitized['api_key'] = sanitize_text_field($input['api_key']);
+        }
+        
+        if (isset($input['max_length'])) {
+            $sanitized['max_length'] = absint($input['max_length']);
+        }
+        
+        return $sanitized;
+    }
 }
 
 class ChineseToEnglishSlug {
@@ -49,13 +66,15 @@ class ChineseToEnglishSlug {
             'cts-admin',
             plugins_url('js/admin.js', __FILE__),
             array('jquery'),
-            '1.0.2',
+            '1.1.0',
             true
         );
         
         wp_localize_script('cts-admin', 'ctsAdmin', array(
             'ajaxurl' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('cts_test_api')
+            'nonce'   => wp_create_nonce('cts_test_api'),
+            'testing' => __('測試中...', 'zh-to-en-slug'),
+            'error'   => __('測試失敗，請檢查網路連線', 'zh-to-en-slug'),
         ));
     }
     
@@ -95,7 +114,20 @@ class ChineseToEnglishSlug {
         // 翻譯標題
         $translated = $this->translate_title($data['post_title']);
         if ($translated) {
-            $data['post_name'] = $this->create_slug($translated);
+            // 建立基本 slug
+            $base_slug = $this->create_slug($translated);
+            
+            // 獲取文章 ID
+            $post_id = isset($postarr['ID']) ? $postarr['ID'] : 0;
+            
+            // 只有當文章已存在（有 ID）時，才添加到 slug 中
+            if ($post_id > 0) {
+                $data['post_name'] = $base_slug . '-' . $post_id;
+            } else {
+                // 如果是新文章，暫時只使用翻譯後的 slug
+                // 文章創建後，WordPress 會再次調用此函數，那時會有 post_id
+                $data['post_name'] = $base_slug;
+            }
         }
         
         return $data;
@@ -103,92 +135,71 @@ class ChineseToEnglishSlug {
     
     public function test_translation_api() {
         check_ajax_referer('cts_test_api', 'nonce');
-        
+
         if (!isset($_POST['api_key'])) {
             wp_send_json_error(esc_html__('API Key 不能為空', 'zh-to-en-slug'));
             return;
         }
-        
-        $api_key = sanitize_text_field(wp_unslash($_POST['api_key']));
-        $test_text = "測試文字";
-        
-        $url = add_query_arg(
-            array('key' => $api_key),
-            'https://translation.googleapis.com/language/translate/v2'
-        );
-        
-        $body = array(
-            'q' => $test_text,
-            'source' => 'zh-TW',
-            'target' => 'en',
-        );
-        
-        $args = array(
-            'body' => wp_json_encode($body),
-            'headers' => array(
-                'Content-Type' => 'application/json; charset=utf-8',
-                'Referer' => home_url(),
-                'X-Requested-With' => 'XMLHttpRequest'
-            ),
-            'timeout' => 15,
-        );
-        
-        $response = wp_remote_post($url, $args);
-        
+
+        $api_key  = sanitize_text_field(wp_unslash($_POST['api_key']));
+        $response = $this->call_translation_api($api_key, '測試文字');
+
         if (is_wp_error($response)) {
             wp_send_json_error(esc_html__('API 連線失敗：', 'zh-to-en-slug') . esc_html($response->get_error_message()));
             return;
         }
-        
+
         $body = json_decode(wp_remote_retrieve_body($response), true);
-        
+
         if (isset($body['data']['translations'][0]['translatedText'])) {
             wp_send_json_success(esc_html__('API 測試成功！翻譯結果：', 'zh-to-en-slug') . esc_html($body['data']['translations'][0]['translatedText']));
-        } else if (isset($body['error'])) {
+        } elseif (isset($body['error'])) {
             wp_send_json_error(esc_html__('API 錯誤：', 'zh-to-en-slug') . esc_html($body['error']['message']));
         } else {
             wp_send_json_error(esc_html__('無法取得翻譯結果，請檢查 API Key 是否正確', 'zh-to-en-slug'));
         }
     }
-    
+
+    private function call_translation_api($api_key, $text) {
+        $url = add_query_arg(
+            array('key' => $api_key),
+            'https://translation.googleapis.com/language/translate/v2'
+        );
+
+        $args = array(
+            'body'    => wp_json_encode(array(
+                'q'      => $text,
+                'source' => 'zh-TW',
+                'target' => 'en',
+            )),
+            'headers' => array(
+                'Content-Type'     => 'application/json; charset=utf-8',
+                'Referer'          => home_url(),
+                'X-Requested-With' => 'XMLHttpRequest',
+            ),
+            'timeout' => 15,
+        );
+
+        return wp_remote_post($url, $args);
+    }
+
     private function translate_title($title) {
         if (empty($this->options['api_key'])) {
             return false;
         }
-        
-        $url = add_query_arg(
-            array('key' => $this->options['api_key']),
-            'https://translation.googleapis.com/language/translate/v2'
-        );
-        
-        $body = array(
-            'q' => $title,
-            'source' => 'zh-TW',
-            'target' => 'en',
-        );
-        
-        $args = array(
-            'body' => wp_json_encode($body),
-            'headers' => array(
-                'Content-Type' => 'application/json; charset=utf-8',
-                'Referer' => home_url(),
-                'X-Requested-With' => 'XMLHttpRequest'
-            ),
-            'timeout' => 15,
-        );
-        
-        $response = wp_remote_post($url, $args);
-        
+
+        $response = $this->call_translation_api($this->options['api_key'], $title);
+
         if (is_wp_error($response)) {
             return false;
         }
-        
+
         $body = json_decode(wp_remote_retrieve_body($response), true);
-        
+
         if (isset($body['data']['translations'][0]['translatedText'])) {
             return $body['data']['translations'][0]['translatedText'];
         }
-        
+
         return false;
     }
     
@@ -199,10 +210,14 @@ class ChineseToEnglishSlug {
         $text = preg_replace('/\s+/', '-', $text);
         $text = trim($text, '-');
         
+        // 取得設定的最大長度，預留空間給 post_id
         $max_length = isset($this->options['max_length']) ? $this->options['max_length'] : 30;
-        if (strlen($text) > $max_length) {
-            $text = substr($text, 0, $max_length);
-            $text = preg_replace('/-[^-]*$/', '', $text);
+        $reserved_length = 12; // 預留給 "-123456" 這樣的 ID 格式
+        $actual_max_length = $max_length - $reserved_length;
+        
+        if (strlen($text) > $actual_max_length) {
+            $text = substr($text, 0, $actual_max_length);
+            $text = preg_replace('/-[^-]*$/', '', $text); // 移除最後一個不完整的單字
         }
         
         return $text;
@@ -231,7 +246,6 @@ class ChineseToEnglishSlug {
                     <tr>
                         <th scope="row"><?php echo esc_html__('API 測試', 'zh-to-en-slug'); ?></th>
                         <td>
-                            <input type="hidden" id="cts_nonce" value="<?php echo esc_attr(wp_create_nonce('cts_test_api')); ?>">
                             <button type="button" id="test-api-button" class="button">
                                 <?php echo esc_html__('測試 API 連線', 'zh-to-en-slug'); ?>
                             </button>
@@ -247,9 +261,9 @@ class ChineseToEnglishSlug {
     
     public function page_init() {
         register_setting(
-            'cts_option_group',
-            'cts_options',
-            array($this, 'sanitize')
+            'cts_option_group',    // Option group
+            'cts_options',         // Option name
+            'sanitize_cts_options' // Using string callback instead of array
         );
         
         add_settings_section(
@@ -276,13 +290,6 @@ class ChineseToEnglishSlug {
         );
     }
     
-    public function sanitize($input) {
-        $new_input = array();
-        $new_input['api_key'] = sanitize_text_field($input['api_key']);
-        $new_input['max_length'] = absint($input['max_length']);
-        return $new_input;
-    }
-    
     public function section_info() {
         echo esc_html__('請設定 Google Translate API Key 和最大字元長度', 'zh-to-en-slug');
     }
@@ -299,6 +306,7 @@ class ChineseToEnglishSlug {
             '<input type="number" id="max_length" name="cts_options[max_length]" value="%s" class="small-text" min="1" max="200" />',
             esc_attr($this->options['max_length'])
         );
+        echo '<p class="description">' . esc_html__('設定的長度會自動保留空間給文章 ID', 'zh-to-en-slug') . '</p>';
     }
 }
 
