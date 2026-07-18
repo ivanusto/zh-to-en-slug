@@ -1,0 +1,7 @@
+.distignore
+.git
+.gitignore
+.github
+.claude
+README.zh-TW.md
+zh-to-en-slug.zip
