@@ -2,12 +2,13 @@
 
 A WordPress plugin that automatically converts Chinese post titles into English slugs using the Google Cloud Translation API, creating clean and SEO-friendly URLs for your content.
 
-![Version](https://img.shields.io/badge/version-1.1.0-blue) ![WordPress](https://img.shields.io/badge/WordPress-6.0%2B-21759b) ![PHP](https://img.shields.io/badge/PHP-7.4%2B-777bb4) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![Version](https://img.shields.io/badge/version-1.2.0-blue) ![WordPress](https://img.shields.io/badge/WordPress-6.0%2B-21759b) ![PHP](https://img.shields.io/badge/PHP-7.4%2B-777bb4) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
 
 ## Key Features
 
 - Automatic translation of Chinese titles to English slugs
-- Post ID appended to slug for guaranteed uniqueness across posts
+- Post ID appended to slug on updates; WordPress core guarantees uniqueness for new posts
+- Translation results cached for 7 days to reduce API usage
 - Configurable maximum slug length
 - Clean and SEO-friendly URL structure
 - Easy-to-use settings interface
@@ -63,6 +64,19 @@ Yes, you can edit the slug manually after it's generated, just like any other Wo
 Yes, the plugin works with all post types that use slugs in WordPress.
 
 ## Changelog
+
+### 1.2.0
+- Fix: request plain-text translations (`format=text`) so HTML entities no longer leak into slugs
+- Fix: prevent empty slugs when max length is set too low (clamped to 20–200 with a hard floor)
+- Fix: PHP notice when saved options were missing a key (defaults now merged via `wp_parse_args`)
+- Improve: widen Chinese detection to cover CJK Extension A and the full basic CJK block
+- Performance: cache translation results in transients for 7 days to reduce API calls
+- Performance: lower API timeout from 15s to 8s so saving never hangs on a slow API
+- Security: add capability check to the API test AJAX endpoint
+- Security: API key field now uses a password input
+- Add: `uninstall.php` cleans up options and cached translations on plugin removal
+- Add: `cts_allowed_statuses` filter; scheduled, pending, and private posts are now processed too
+- Dev: modernize `register_setting` to the args-array signature
 
 ### 1.1.0
 - Append post ID to generated slug to guarantee uniqueness across posts

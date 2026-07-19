@@ -3,7 +3,7 @@
 Plugin Name: Chinese to English Slug Converter
 Description: Convert Chinese post titles to English slugs using translation API
 Plugin URI: https://yblog.org/zh-to-en-slug
-Version: 1.1.0
+Version: 1.2.0
 Author: Ivan Lin
 Author URI: https://yblog.org/
 Requires at least: 6.0
@@ -29,7 +29,8 @@ if (!function_exists('sanitize_cts_options')) {
         }
         
         if (isset($input['max_length'])) {
-            $sanitized['max_length'] = absint($input['max_length']);
+            // 夾在 20-200 之間，避免扣除 ID 保留空間後 slug 長度歸零
+            $sanitized['max_length'] = min(200, max(20, absint($input['max_length'])));
         }
         
         return $sanitized;
@@ -37,24 +38,30 @@ if (!function_exists('sanitize_cts_options')) {
 }
 
 class ChineseToEnglishSlug {
-    private $options;
-    
+    private $options = null;
+
     public function __construct() {
         // 初始化設定
         add_action('admin_menu', array($this, 'add_plugin_page'));
         add_action('admin_init', array($this, 'page_init'));
-        
+
         // 修改 slug 生成的時機
         add_filter('wp_insert_post_data', array($this, 'process_post_data'), 10, 2);
-        
+
         // 添加 AJAX 處理
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
         add_action('wp_ajax_test_translation_api', array($this, 'test_translation_api'));
-        
-        $this->options = get_option('cts_options', array(
-            'max_length' => 30,
-            'api_key' => ''
-        ));
+    }
+
+    private function get_options() {
+        if (null === $this->options) {
+            // 合併預設值，避免舊資料缺少個別 key
+            $this->options = wp_parse_args(get_option('cts_options', array()), array(
+                'max_length' => 30,
+                'api_key'    => '',
+            ));
+        }
+        return $this->options;
     }
     
     public function enqueue_admin_scripts($hook) {
@@ -66,7 +73,7 @@ class ChineseToEnglishSlug {
             'cts-admin',
             plugins_url('js/admin.js', __FILE__),
             array('jquery'),
-            '1.1.0',
+            '1.2.0',
             true
         );
         
@@ -89,17 +96,17 @@ class ChineseToEnglishSlug {
             return $data;
         }
         
-        // 新的檢查邏輯：允許處理草稿和發布狀態
-        $allowed_statuses = array('draft', 'publish');
+        // 允許處理的文章狀態，可透過 filter 自訂
+        $allowed_statuses = apply_filters('cts_allowed_statuses', array('draft', 'publish', 'future', 'pending', 'private'));
         $current_status = isset($postarr['post_status']) ? $postarr['post_status'] : '';
-        
+
         // 檢查是否是允許的狀態
-        if (!in_array($current_status, $allowed_statuses)) {
+        if (!in_array($current_status, $allowed_statuses, true)) {
             return $data;
         }
-        
-        // 檢查是否包含中文
-        if (!preg_match('/[\x{4e00}-\x{9fa5}]/u', $data['post_title'])) {
+
+        // 檢查是否包含中文（含 CJK Extension A 與基本區全範圍）
+        if (!preg_match('/[\x{3400}-\x{4DBF}\x{4e00}-\x{9FFF}]/u', $data['post_title'])) {
             return $data;
         }
         
@@ -124,8 +131,8 @@ class ChineseToEnglishSlug {
             if ($post_id > 0) {
                 $data['post_name'] = $base_slug . '-' . $post_id;
             } else {
-                // 如果是新文章，暫時只使用翻譯後的 slug
-                // 文章創建後，WordPress 會再次調用此函數，那時會有 post_id
+                // 新文章尚無 ID，直接使用翻譯後的 slug；
+                // 唯一性由 WordPress 核心的 wp_unique_post_slug 保證
                 $data['post_name'] = $base_slug;
             }
         }
@@ -135,6 +142,11 @@ class ChineseToEnglishSlug {
     
     public function test_translation_api() {
         check_ajax_referer('cts_test_api', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(esc_html__('權限不足', 'zh-to-en-slug'));
+            return;
+        }
 
         if (!isset($_POST['api_key'])) {
             wp_send_json_error(esc_html__('API Key 不能為空', 'zh-to-en-slug'));
@@ -171,24 +183,36 @@ class ChineseToEnglishSlug {
                 'q'      => $text,
                 'source' => 'zh-TW',
                 'target' => 'en',
+                // 要求純文字回應，避免回傳 HTML entities（如 &#39;）污染 slug
+                'format' => 'text',
             )),
             'headers' => array(
                 'Content-Type'     => 'application/json; charset=utf-8',
                 'Referer'          => home_url(),
                 'X-Requested-With' => 'XMLHttpRequest',
             ),
-            'timeout' => 15,
+            // 翻譯失敗會回退到 WP 預設 slug，寧可快速失敗也不要卡住存檔流程
+            'timeout' => 8,
         );
 
         return wp_remote_post($url, $args);
     }
 
     private function translate_title($title) {
-        if (empty($this->options['api_key'])) {
+        $options = $this->get_options();
+
+        if (empty($options['api_key'])) {
             return false;
         }
 
-        $response = $this->call_translation_api($this->options['api_key'], $title);
+        // 相同標題直接使用快取，減少 API 呼叫次數與存檔延遲
+        $cache_key = 'cts_tr_' . md5($title);
+        $cached = get_transient($cache_key);
+        if (false !== $cached) {
+            return $cached;
+        }
+
+        $response = $this->call_translation_api($options['api_key'], $title);
 
         if (is_wp_error($response)) {
             return false;
@@ -197,7 +221,9 @@ class ChineseToEnglishSlug {
         $body = json_decode(wp_remote_retrieve_body($response), true);
 
         if (isset($body['data']['translations'][0]['translatedText'])) {
-            return $body['data']['translations'][0]['translatedText'];
+            $translated = $body['data']['translations'][0]['translatedText'];
+            set_transient($cache_key, $translated, WEEK_IN_SECONDS);
+            return $translated;
         }
 
         return false;
@@ -211,10 +237,12 @@ class ChineseToEnglishSlug {
         $text = trim($text, '-');
         
         // 取得設定的最大長度，預留空間給 post_id
-        $max_length = isset($this->options['max_length']) ? $this->options['max_length'] : 30;
+        $options = $this->get_options();
+        $max_length = absint($options['max_length']);
         $reserved_length = 12; // 預留給 "-123456" 這樣的 ID 格式
-        $actual_max_length = $max_length - $reserved_length;
-        
+        // 保底 8 個字元，避免設定值過小時 slug 被截成空字串
+        $actual_max_length = max(8, $max_length - $reserved_length);
+
         if (strlen($text) > $actual_max_length) {
             $text = substr($text, 0, $actual_max_length);
             $text = preg_replace('/-[^-]*$/', '', $text); // 移除最後一個不完整的單字
@@ -261,9 +289,16 @@ class ChineseToEnglishSlug {
     
     public function page_init() {
         register_setting(
-            'cts_option_group',    // Option group
-            'cts_options',         // Option name
-            'sanitize_cts_options' // Using string callback instead of array
+            'cts_option_group',
+            'cts_options',
+            array(
+                'type'              => 'array',
+                'sanitize_callback' => 'sanitize_cts_options',
+                'default'           => array(
+                    'max_length' => 30,
+                    'api_key'    => '',
+                ),
+            )
         );
         
         add_settings_section(
@@ -295,16 +330,18 @@ class ChineseToEnglishSlug {
     }
     
     public function api_key_callback() {
+        $options = $this->get_options();
         printf(
-            '<input type="text" id="api_key" name="cts_options[api_key]" value="%s" class="regular-text" />',
-            esc_attr($this->options['api_key'])
+            '<input type="password" id="api_key" name="cts_options[api_key]" value="%s" class="regular-text" autocomplete="off" />',
+            esc_attr($options['api_key'])
         );
     }
-    
+
     public function max_length_callback() {
+        $options = $this->get_options();
         printf(
-            '<input type="number" id="max_length" name="cts_options[max_length]" value="%s" class="small-text" min="1" max="200" />',
-            esc_attr($this->options['max_length'])
+            '<input type="number" id="max_length" name="cts_options[max_length]" value="%s" class="small-text" min="20" max="200" />',
+            esc_attr($options['max_length'])
         );
         echo '<p class="description">' . esc_html__('設定的長度會自動保留空間給文章 ID', 'zh-to-en-slug') . '</p>';
     }

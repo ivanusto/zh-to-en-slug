@@ -4,13 +4,14 @@
 
 一個專門為 WordPress 開發的輕量級外掛，可在發佈文章時自動將中文標題翻譯成英文代稱 (Slug)，為您的網站內容建立乾淨且符合 SEO 的網址結構。
 
-![Version](https://img.shields.io/badge/version-1.1.0-blue) ![WordPress](https://img.shields.io/badge/WordPress-6.0%2B-21759b) ![PHP](https://img.shields.io/badge/PHP-7.4%2B-777bb4) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![Version](https://img.shields.io/badge/version-1.2.0-blue) ![WordPress](https://img.shields.io/badge/WordPress-6.0%2B-21759b) ![PHP](https://img.shields.io/badge/PHP-7.4%2B-777bb4) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
 
 ## 主要功能
 
 - **自動翻譯**：自動將中文文章標題翻譯為英文代稱 (Slug)。
-- **保證唯一性**：自動在代稱結尾附加文章 ID，確保跨文章的網址絕對不重複。
-- **最大長度設定**：可自由設定代稱的最大字元長度限制。
+- **保證唯一性**：更新文章時在代稱結尾附加文章 ID；新文章則由 WordPress 核心機制確保網址不重複。
+- **翻譯快取**：相同標題的翻譯結果快取 7 天，減少 API 用量與存檔延遲。
+- **最大長度設定**：可自由設定代稱的最大字元長度限制（20–200）。
 - **SEO 友善網址**：產生乾淨、不含中文字元編碼 (%xx) 的語意化網址。
 - **設定簡單**：提供易於操作的後台設定介面。
 - **API 連線測試**：內建 API 連線測試工具，可即時驗證金鑰是否有效。
