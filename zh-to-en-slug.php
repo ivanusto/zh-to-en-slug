@@ -3,13 +3,12 @@
 Plugin Name: Chinese to English Slug Converter
 Description: Convert Chinese post titles to English slugs using translation API
 Plugin URI: https://yblog.org/zh-to-en-slug
-Version: 1.2.1
+Version: 1.2.2
 Author: Ivan Lin
 Author URI: https://yblog.org/
 Requires at least: 6.0
 Tested up to: 7.0
 Text Domain: zh-to-en-slug
-Domain Path: /languages
 License: Apache-2.0
 License URI: https://opensource.org/license/apache-2-0
 */
@@ -17,11 +16,6 @@ License URI: https://opensource.org/license/apache-2-0
 // 防止直接訪問此文件
 if (!defined('ABSPATH')) {
     exit;
-}
-
-// 若同名外掛已載入（例如新舊版本同時安裝），跳過本檔避免 class 重複宣告的 fatal error
-if (class_exists('ChineseToEnglishSlug')) {
-    return;
 }
 
 // Define the sanitize function at the global scope
@@ -41,6 +35,12 @@ if (!function_exists('sanitize_cts_options')) {
         return $sanitized;
     }
 }
+
+// 條件式宣告：若同名外掛已載入（例如新舊版本同時安裝），跳過宣告與初始化，
+// 避免 class 重複宣告的 fatal error。
+// 注意：不可改成「declare 前先 class_exists 就 return」——PHP 會在編譯期
+// 先綁定本檔的無條件 class 宣告，導致該檢查永遠為真、外掛整個不執行。
+if (!class_exists('ChineseToEnglishSlug')) {
 
 class ChineseToEnglishSlug {
     private $options = null;
@@ -78,7 +78,7 @@ class ChineseToEnglishSlug {
             'cts-admin',
             plugins_url('js/admin.js', __FILE__),
             array('jquery'),
-            '1.2.1',
+            '1.2.2',
             true
         );
         
@@ -357,3 +357,5 @@ add_action('plugins_loaded', function() {
     global $chinese_to_english_slug;
     $chinese_to_english_slug = new ChineseToEnglishSlug();
 });
+
+} // end if (!class_exists('ChineseToEnglishSlug'))

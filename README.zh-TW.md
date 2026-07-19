@@ -4,7 +4,7 @@
 
 一個專門為 WordPress 開發的輕量級外掛，可在發佈文章時自動將中文標題翻譯成英文代稱 (Slug)，為您的網站內容建立乾淨且符合 SEO 的網址結構。
 
-![Version](https://img.shields.io/badge/version-1.2.1-blue) ![WordPress](https://img.shields.io/badge/WordPress-6.0%2B-21759b) ![PHP](https://img.shields.io/badge/PHP-7.4%2B-777bb4) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![Version](https://img.shields.io/badge/version-1.2.2-blue) ![WordPress](https://img.shields.io/badge/WordPress-6.0%2B-21759b) ![PHP](https://img.shields.io/badge/PHP-7.4%2B-777bb4) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
 
 ## 主要功能
 

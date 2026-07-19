@@ -2,7 +2,7 @@
 
 A WordPress plugin that automatically converts Chinese post titles into English slugs using the Google Cloud Translation API, creating clean and SEO-friendly URLs for your content.
 
-![Version](https://img.shields.io/badge/version-1.2.1-blue) ![WordPress](https://img.shields.io/badge/WordPress-6.0%2B-21759b) ![PHP](https://img.shields.io/badge/PHP-7.4%2B-777bb4) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![Version](https://img.shields.io/badge/version-1.2.2-blue) ![WordPress](https://img.shields.io/badge/WordPress-6.0%2B-21759b) ![PHP](https://img.shields.io/badge/PHP-7.4%2B-777bb4) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
 
 ## Key Features
 
@@ -64,6 +64,10 @@ Yes, you can edit the slug manually after it's generated, just like any other Wo
 Yes, the plugin works with all post types that use slugs in WordPress.
 
 ## Changelog
+
+### 1.2.2
+- Fix: settings page and slug translation were completely disabled in 1.2.1 — the duplicate-class guard always triggered due to PHP compile-time class binding; the class declaration is now conditionally wrapped instead
+- Fix: remove "Domain Path" header pointing to a folder not shipped in the release package
 
 ### 1.2.1
 - Fix: guard against duplicate class declaration when two copies of the plugin are installed side by side
