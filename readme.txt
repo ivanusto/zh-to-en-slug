@@ -14,6 +14,8 @@ Automatically converts Chinese post titles to English slugs using Google Transla
 
 Chinese to English Slug Converter is a WordPress plugin that automatically converts Chinese post titles into English slugs. It uses the Google Cloud Translation API to provide accurate translations and creates clean, SEO-friendly URLs for your content.
 
+Looking for a full site toolkit? The same slug translation logic is also bundled in Omni Webmaster & SEO Suite: https://github.com/ivanusto/omni-webmaster-seo-suite
+
 = Key Features =
 
 * Automatic translation of Chinese titles to English slugs

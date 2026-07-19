@@ -75,6 +75,10 @@
 
 此外掛本身不會儲存、追蹤或收集任何個人隱私數據。如需更多資訊，請造訪 [Google Cloud 隱私權說明](https://cloud.google.com/privacy)。
 
+## 相關專案
+
+如果您需要的不只是網址轉換，[Omni Webmaster & SEO Suite](https://github.com/ivanusto/omni-webmaster-seo-suite) 整合了本外掛的核心翻譯邏輯（並額外提供免金鑰備援端點），以及 SEO 清理、留言停用、縮圖管理與 Meta Pixel 追蹤等站長工具。
+
 ## 授權條款
 
 本專案採用 [Apache-2.0](LICENSE) 授權條款。

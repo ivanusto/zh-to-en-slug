@@ -107,6 +107,10 @@ The following data is sent to Google's servers:
 
 No personal data is stored or tracked by this plugin. For more information, visit [Google Cloud Privacy](https://cloud.google.com/privacy).
 
+## Related Project
+
+Need a full site toolkit instead of a single-purpose plugin? [Omni Webmaster & SEO Suite](https://github.com/ivanusto/omni-webmaster-seo-suite) bundles this slug translator (same core logic, plus a key-less fallback endpoint) together with SEO cleanup, comment control, thumbnail management, and Meta Pixel tracking.
+
 ## Credits
 
 - Developed by [Ivan Lin](https://yblog.org/)
