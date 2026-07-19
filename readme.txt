@@ -2,9 +2,9 @@
 Contributors: Ivan Lin
 Tags: chinese, english, slug, translation, permalink
 Requires at least: 6.0
-Tested up to: 6.7.1
+Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.2.0
+Stable tag: 1.2.1
 License: Apache-2.0
 License URI: https://opensource.org/license/apache-2-0
 
@@ -87,6 +87,11 @@ Yes, the plugin works with all post types that use slugs in WordPress.
 3. Example of translated slug
 
 == Changelog ==
+
+= 1.2.1 =
+* Fix: guard against duplicate class declaration when two copies of the plugin are installed side by side
+* Fix: bump "Tested up to" to WordPress 7.0
+* Dev: ship a proper distribution zip (top-level folder zh-to-en-slug) as a release asset
 
 = 1.2.0 =
 * Fix: request plain-text translations (format=text) so HTML entities no longer leak into slugs

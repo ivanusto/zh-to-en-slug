@@ -3,11 +3,11 @@
 Plugin Name: Chinese to English Slug Converter
 Description: Convert Chinese post titles to English slugs using translation API
 Plugin URI: https://yblog.org/zh-to-en-slug
-Version: 1.2.0
+Version: 1.2.1
 Author: Ivan Lin
 Author URI: https://yblog.org/
 Requires at least: 6.0
-Tested up to: 6.7.1
+Tested up to: 7.0
 Text Domain: zh-to-en-slug
 Domain Path: /languages
 License: Apache-2.0
@@ -17,6 +17,11 @@ License URI: https://opensource.org/license/apache-2-0
 // 防止直接訪問此文件
 if (!defined('ABSPATH')) {
     exit;
+}
+
+// 若同名外掛已載入（例如新舊版本同時安裝），跳過本檔避免 class 重複宣告的 fatal error
+if (class_exists('ChineseToEnglishSlug')) {
+    return;
 }
 
 // Define the sanitize function at the global scope
@@ -73,7 +78,7 @@ class ChineseToEnglishSlug {
             'cts-admin',
             plugins_url('js/admin.js', __FILE__),
             array('jquery'),
-            '1.2.0',
+            '1.2.1',
             true
         );
         
