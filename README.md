@@ -2,7 +2,7 @@
 
 A WordPress plugin that automatically converts Chinese post titles into English slugs using the Google Cloud Translation API, creating clean and SEO-friendly URLs for your content.
 
-![Version](https://img.shields.io/badge/version-1.2.2-blue) ![WordPress](https://img.shields.io/badge/WordPress-6.0%2B-21759b) ![PHP](https://img.shields.io/badge/PHP-7.4%2B-777bb4) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![Version](https://img.shields.io/badge/version-1.3.0-blue) ![WordPress](https://img.shields.io/badge/WordPress-6.0%2B-21759b) ![PHP](https://img.shields.io/badge/PHP-7.4%2B-777bb4) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
 
 ## Key Features
 
@@ -64,6 +64,11 @@ Yes, you can edit the slug manually after it's generated, just like any other Wo
 Yes, the plugin works with all post types that use slugs in WordPress.
 
 ## Changelog
+
+### 1.3.0
+- Improve: generated slugs no longer append the post ID (e.g. `-13663`); uniqueness is delegated to WordPress core, which only adds a numeric suffix on an actual collision. Existing slugs are not modified.
+- Improve: the full configured maximum length is now usable for the slug itself (previously 12 characters were reserved for the ID suffix, leaving only 18 of the default 30)
+- Improve: truncation cuts at whole-word boundaries without discarding a word that fit exactly, and trims trailing function words (of, and, the, …) so slugs end on a meaningful word
 
 ### 1.2.2
 - Fix: settings page and slug translation were completely disabled in 1.2.1 — the duplicate-class guard always triggered due to PHP compile-time class binding; the class declaration is now conditionally wrapped instead

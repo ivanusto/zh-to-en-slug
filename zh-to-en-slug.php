@@ -3,7 +3,7 @@
 Plugin Name: Chinese to English Slug Converter
 Description: Convert Chinese post titles to English slugs using translation API
 Plugin URI: https://yblog.org/zh-to-en-slug
-Version: 1.2.2
+Version: 1.3.0
 Author: Ivan Lin
 Author URI: https://yblog.org/
 Requires at least: 6.0
@@ -28,7 +28,7 @@ if (!function_exists('sanitize_cts_options')) {
         }
         
         if (isset($input['max_length'])) {
-            // 夾在 20-200 之間，避免扣除 ID 保留空間後 slug 長度歸零
+            // 夾在 20-200 之間，維持可用的 slug 長度
             $sanitized['max_length'] = min(200, max(20, absint($input['max_length'])));
         }
         
@@ -78,7 +78,7 @@ class ChineseToEnglishSlug {
             'cts-admin',
             plugins_url('js/admin.js', __FILE__),
             array('jquery'),
-            '1.2.2',
+            '1.3.0',
             true
         );
         
@@ -128,16 +128,10 @@ class ChineseToEnglishSlug {
         if ($translated) {
             // 建立基本 slug
             $base_slug = $this->create_slug($translated);
-            
-            // 獲取文章 ID
-            $post_id = isset($postarr['ID']) ? $postarr['ID'] : 0;
-            
-            // 只有當文章已存在（有 ID）時，才添加到 slug 中
-            if ($post_id > 0) {
-                $data['post_name'] = $base_slug . '-' . $post_id;
-            } else {
-                // 新文章尚無 ID，直接使用翻譯後的 slug；
-                // 唯一性由 WordPress 核心的 wp_unique_post_slug 保證
+
+            // 唯一性由 WordPress 核心的 wp_unique_post_slug 保證，
+            // 真的撞名才會補 "-2"，不需要每篇都掛文章 ID
+            if ('' !== $base_slug) {
                 $data['post_name'] = $base_slug;
             }
         }
@@ -238,22 +232,30 @@ class ChineseToEnglishSlug {
         $text = strtolower($text);
         $text = remove_accents($text);
         $text = preg_replace('/[^a-z0-9\s-]/', '', $text);
-        $text = preg_replace('/\s+/', '-', $text);
+        $text = preg_replace('/[\s-]+/', '-', $text);
         $text = trim($text, '-');
-        
-        // 取得設定的最大長度，預留空間給 post_id
-        $options = $this->get_options();
-        $max_length = absint($options['max_length']);
-        $reserved_length = 12; // 預留給 "-123456" 這樣的 ID 格式
-        // 保底 8 個字元，避免設定值過小時 slug 被截成空字串
-        $actual_max_length = max(8, $max_length - $reserved_length);
 
-        if (strlen($text) > $actual_max_length) {
-            $text = substr($text, 0, $actual_max_length);
-            $text = preg_replace('/-[^-]*$/', '', $text); // 移除最後一個不完整的單字
+        // 不再附加文章 ID，設定的最大長度可以全額使用
+        $options = $this->get_options();
+        $max_length = max(20, absint($options['max_length']));
+
+        if (strlen($text) > $max_length) {
+            $cut = substr($text, 0, $max_length);
+            // 只有切在單字中間時才丟掉最後一段，剛好切在字尾就保留完整單字
+            if ('-' !== substr($text, $max_length, 1) && false !== strpos($cut, '-')) {
+                $cut = substr($cut, 0, strrpos($cut, '-'));
+            }
+            $text = rtrim($cut, '-');
         }
-        
-        return $text;
+
+        // 結尾若是 of/and/the 這類虛詞，看起來就像截斷失敗，修剪到實詞為止
+        $stopwords = array('a', 'an', 'the', 'of', 'and', 'or', 'to', 'in', 'on', 'at', 'for', 'with', 'by', 'from', 'is', 'are', 'was', 'were', 'be', 'as', 'that', 'this', 'its');
+        $parts = explode('-', $text);
+        while (count($parts) > 1 && in_array(end($parts), $stopwords, true)) {
+            array_pop($parts);
+        }
+
+        return implode('-', $parts);
     }
     
     public function add_plugin_page() {
@@ -348,7 +350,7 @@ class ChineseToEnglishSlug {
             '<input type="number" id="max_length" name="cts_options[max_length]" value="%s" class="small-text" min="20" max="200" />',
             esc_attr($options['max_length'])
         );
-        echo '<p class="description">' . esc_html__('設定的長度會自動保留空間給文章 ID', 'zh-to-en-slug') . '</p>';
+        echo '<p class="description">' . esc_html__('截斷會落在完整單字邊界，重複網址由 WordPress 自動處理', 'zh-to-en-slug') . '</p>';
     }
 }
 
