@@ -9,8 +9,8 @@ Author URI: https://yblog.org/
 Requires at least: 6.0
 Tested up to: 7.0
 Text Domain: zh-to-en-slug
-License: Apache-2.0
-License URI: https://opensource.org/license/apache-2-0
+License: GPLv2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
 */
 
 // 防止直接訪問此文件

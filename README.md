@@ -123,4 +123,4 @@ Need a full site toolkit instead of a single-purpose plugin? [Omni Webmaster & S
 
 ## License
 
-[Apache-2.0](LICENSE)
+[GPL-2.0-or-later](LICENSE)
