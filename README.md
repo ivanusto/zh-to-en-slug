@@ -121,6 +121,6 @@ Need a full site toolkit instead of a single-purpose plugin? [Omni Webmaster & S
 - Developed by [Ivan Lin](https://yblog.org/)
 - Uses [Google Cloud Translation API](https://cloud.google.com/translate)
 
-## License
+## License / 授權條款
 
-[GPL-2.0-or-later](LICENSE)
+This project is licensed under the [GNU General Public License v2.0 or later (GPL-2.0-or-later)](LICENSE).
